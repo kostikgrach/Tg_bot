@@ -1,7 +1,8 @@
 import logging
-from telegram.ext import Application, MessageHandler, filters
+from telegram.ext import Application, MessageHandler, filters, CommandHandler
 from dotenv import load_dotenv
 import os
+import datetime
 
 # Запускаем логгирование
 logging.basicConfig(
@@ -25,6 +26,29 @@ async def echo(update, context):
     await update.message.reply_text('Я получил сообщение ' + update.message.text)
 
 
+async def start(update, context):
+    """Отправляет сообщение когда получена команда /start"""
+    user = update.effective_user
+    await update.message.reply_html(
+        rf"Привет {user.mention_html()}! Я эхо-бот. Напишите мне что-нибудь, и я пришлю это назад!",
+    )
+
+
+async def help_command(update, context):
+    """Отправляет сообщение когда получена команда /help"""
+    await update.message.reply_text("Я пока не умею помогать... Я только ваше эхо.")
+
+
+async def date(update, context):
+    d = datetime.datetime.today()
+    await update.message.reply_text(f'Сегодня: {d.strftime("%d-%B-%Y")}')
+
+
+async def time(update, context):
+    d = datetime.datetime.today()
+    await update.message.reply_text(f'Сейчас: {d.strftime("%H:%M:%S")}')
+
+
 def main():
     # Создаём объект Application.
     # Вместо слова "TOKEN" надо разместить полученный от @BotFather токен
@@ -35,10 +59,14 @@ def main():
     # После регистрации обработчика в приложении
     # эта асинхронная функция будет вызываться при получении сообщения
     # с типом "текст", т. е. текстовых сообщений.
-    text_handler = MessageHandler(filters.TEXT, echo)
+    text_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, echo)
 
     # Регистрируем обработчик в приложении.
     application.add_handler(text_handler)
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("date", date))
+    application.add_handler(CommandHandler("time", time))
 
     # Запускаем приложение.
     application.run_polling()
